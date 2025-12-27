@@ -4,7 +4,7 @@
 
 Our goal is to provide a comprehensive SQL development experience directly within VS Code, focusing on performance, usability, and features that developers actually need.
 
-## 🚀 Features
+## Features
 
 ### Current Features (MVP)
 - **Activity Bar Integration**: Dedicated "Open Data Studio" sidebar.
@@ -13,12 +13,12 @@ Our goal is to provide a comprehensive SQL development experience directly withi
 - **Scaffolded Architecture**: Built on a modular Provider model to support multiple SQL engines in the future.
 
 ### Roadmap & Planned Features
-- 🔍 **Smart Search**: Filter huge lists of tables and stored procedures instantly.
-- ⚡ **Context Actions**: "Select Top 1000", "Edit Data", "Script as Create/Alter".
-- 🔌 **Multi-Engine Support**: Architecture designed to support MSSQL, PostgreSQL, MySQL, and more.
-- 📊 **Data Visualization**: Integrated grid results and simple charting.
+- **Smart Search**: Filter huge lists of tables and stored procedures instantly.
+- **Context Actions**: "Select Top 1000", "Edit Data", "Script as Create/Alter".
+- **Multi-Engine Support**: Architecture designed to support MSSQL, PostgreSQL, MySQL, and more.
+- **Data Visualization**: Integrated grid results and simple charting.
 
-## 🛠️ Installation & Development
+## Installation & Development
 
 If you want to contribute or modify the extension, follow these steps:
 
@@ -45,7 +45,7 @@ If you want to contribute or modify the extension, follow these steps:
 - `src/providers/DatabaseTreeDataProvider.ts`: Logic for the Sidebar Explorer (Server/Database tree).
 - `package.json`: Manifest file defining commands, views, and activation events.
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions!
 1.  Fork the Project.
@@ -54,5 +54,5 @@ We welcome contributions!
 4.  Push to the Branch (`git push origin feature/AmazingFeature`).
 5.  Open a Pull Request.
 
-## 📄 License
+## License
 [MIT](LICENSE)
