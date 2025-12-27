@@ -2,16 +2,45 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "npm",
-            "script": "watch",
-            "problemMatcher": "$tsc-watch",
-            "isBackground": true,
-            "presentation": {
-                "reveal": "never"
+            "type": "shell",
+            "label": "npm: watch",
+            "command": "npm run watch",
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/c",
+                    "npm",
+                    "run",
+                    "watch"
+                ]
             },
+            "isBackground": true,
+            "problemMatcher": "$tsc-watch",
             "group": {
                 "kind": "build",
                 "isDefault": true
+            },
+            "presentation": {
+                "reveal": "never"
+            }
+        },
+        {
+            "type": "shell",
+            "label": "npm: compile",
+            "command": "npm run compile",
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/c",
+                    "npm",
+                    "run",
+                    "compile"
+                ]
+            },
+            "group": "build",
+            "problemMatcher": "$tsc",
+            "presentation": {
+                "reveal": "never"
             }
         }
     ]

@@ -1,58 +1,37 @@
 # Open Data Studio
 
-**Open Data Studio** is a Visual Studio Code extension designed to bring the best features of Azure Data Studio (ADS) into VS Code, purely as an open-source project. 
+**Open Data Studio** is a Visual Studio Code extension designed to bring the best features of Azure Data Studio (ADS) into VS Code, purely as an open-source project.
 
 Our goal is to provide a comprehensive SQL development experience directly within VS Code, focusing on performance, usability, and features that developers actually need.
 
+> [!NOTE]
+> **AI Development Disclaimer**: This extension is coded with the assistance of Artificial Intelligence. Every change is monitored, reviewed, and accepted by human maintainers to ensure quality and security. We are transparent about our use of AI to build better software, faster. [Read more about our workflow in DEVELOPMENT.md](DEVELOPMENT.md).
+
 ## Features
 
-### Current Features (MVP)
-- **Activity Bar Integration**: Dedicated "Open Data Studio" sidebar.
-- **Connection Manager**: View your database server connections.
+### Current Capabilities
+- **Activity Bar Integration**: Dedicated "Open Data Studio" sidebar for quick access.
+- **Connection Manager**: visualize your database server connections.
 - **Database Explorer**: Tree view navigation for Servers, Databases, and Tables.
-- **Scaffolded Architecture**: Built on a modular Provider model to support multiple SQL engines in the future.
+- **Database Dashboard**: A dedicated dashboard for each database to view tables, views, and stored procedures at a glance.
+- **Context Menus**: Right-click integration on database items to open specific actions.
 
-### Roadmap & Planned Features
+### Roadmap
 - **Smart Search**: Filter huge lists of tables and stored procedures instantly.
-- **Context Actions**: "Select Top 1000", "Edit Data", "Script as Create/Alter".
-- **Multi-Engine Support**: Architecture designed to support MSSQL, PostgreSQL, MySQL, and more.
+- **Query Execution**: Run SQL queries directly against your connections.
 - **Data Visualization**: Integrated grid results and simple charting.
+- **Multi-Engine Support**: Architecture designed to support MSSQL, PostgreSQL, MySQL, and more to come.
 
-## Installation & Development
+## Installation
 
-If you want to contribute or modify the extension, follow these steps:
+The extension is currently in active development.
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) installed.
-- [Visual Studio Code](https://code.visualstudio.com/) installed.
+1.  Clone the repo.
+2.  Run `npm install`.
+3.  Press `F5` to debug.
 
-### Setup
-1.  **Clone the repository**:
-    ```bash
-    git clone https://github.com/Start-Code-Tech/Open-Data-Studio.git
-    cd Open-Data-Studio
-    ```
-2.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
-3.  **Run the Extension**:
-    - Press `F5` in VS Code.
-    - This opens a new "Extension Development Host" window with the extension loaded.
-
-### Project Structure
-- `src/extension.ts`: The entry point where commands and providers are registered.
-- `src/providers/DatabaseTreeDataProvider.ts`: Logic for the Sidebar Explorer (Server/Database tree).
-- `package.json`: Manifest file defining commands, views, and activation events.
-
-## Contributing
-
-We welcome contributions!
-1.  Fork the Project.
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
-4.  Push to the Branch (`git push origin feature/AmazingFeature`).
-5.  Open a Pull Request.
+For detailed development and contribution guidelines, please see **[DEVELOPMENT.md](DEVELOPMENT.md)**.
 
 ## License
+
 [MIT](LICENSE)

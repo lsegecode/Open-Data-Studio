@@ -36,8 +36,21 @@
             {
                 "command": "open-data-studio.helloWorld",
                 "title": "Open Data Studio: Hello World"
+            },
+            {
+                "command": "open-data-studio.openDashboard",
+                "title": "Open Dashboard"
             }
-        ]
+        ],
+        "menus": {
+            "view/item/context": [
+                {
+                    "command": "open-data-studio.openDashboard",
+                    "when": "view == openDataExplorer && viewItem == database",
+                    "group": "navigation"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
