@@ -40,6 +40,11 @@
             {
                 "command": "open-data-studio.openDashboard",
                 "title": "Open Dashboard"
+            },
+            {
+                "command": "open-data-studio.newQuery",
+                "title": "New Query",
+                "icon": "$(new-file)"
             }
         ],
         "menus": {
@@ -47,6 +52,13 @@
                 {
                     "command": "open-data-studio.openDashboard",
                     "when": "view == openDataExplorer && viewItem == database",
+                    "group": "navigation"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "open-data-studio.newQuery",
+                    "when": "view == openDataExplorer",
                     "group": "navigation"
                 }
             ]

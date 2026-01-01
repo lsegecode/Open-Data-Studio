@@ -26,6 +26,11 @@ export function activate(context: vscode.ExtensionContext) {
         DatabaseDashboard.createOrShow(context.extensionUri, dbName);
     });
 
+    let newQueryCommand = vscode.commands.registerCommand('open-data-studio.newQuery', async () => {
+        const doc = await vscode.workspace.openTextDocument({ language: 'sql', content: '' });
+        await vscode.window.showTextDocument(doc);
+    });
+
     context.subscriptions.push(disposable);
     context.subscriptions.push(openDashboardCommand);
 }
