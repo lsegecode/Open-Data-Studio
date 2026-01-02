@@ -79,9 +79,22 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    let deleteConnectionCommand = vscode.commands.registerCommand('open-data-studio.deleteConnection', async (element: any) => {
+        if (!element || !element.connectionId) return;
+
+        try {
+            await ConnectionManager.getInstance().deleteConnection(element.connectionId);
+            databaseProvider.refresh();
+            vscode.window.showInformationMessage('Connection deleted.');
+        } catch (err: any) {
+            vscode.window.showErrorMessage(`Failed to delete connection: ${err.message || err}`);
+        }
+    });
+
     context.subscriptions.push(disposable);
     context.subscriptions.push(openDashboardCommand);
     context.subscriptions.push(addConnectionCommand);
+    context.subscriptions.push(deleteConnectionCommand);
 }
 
 // This method is called when your extension is deactivated

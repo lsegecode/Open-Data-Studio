@@ -45,6 +45,11 @@
                 "command": "open-data-studio.addConnection",
                 "title": "Add Connection",
                 "icon": "$(add)"
+            },
+            {
+                "command": "open-data-studio.deleteConnection",
+                "title": "Delete Connection",
+                "icon": "$(trash)"
             }
         ],
         "menus": {
@@ -60,6 +65,11 @@
                     "command": "open-data-studio.openDashboard",
                     "when": "view == openDataExplorer && viewItem == database",
                     "group": "navigation"
+                },
+                {
+                    "command": "open-data-studio.deleteConnection",
+                    "when": "view == openDataExplorer && viewItem == server",
+                    "group": "inline"
                 }
             ]
         }
@@ -87,6 +97,7 @@
         "typescript": "^5.1.3"
     },
     "dependencies": {
+        "msnodesqlv8": "^5.1.3",
         "mssql": "^12.2.0"
     }
 }
