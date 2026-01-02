@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 
 import { DatabaseTreeDataProvider } from './providers/DatabaseTreeDataProvider';
 import { DatabaseDashboard } from './panels/DatabaseDashboard';
+import { ConnectionManager } from './services/ConnectionManager';
+import { ConnectionInfo } from './models/ConnectionInfo';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -12,6 +14,9 @@ export function activate(context: vscode.ExtensionContext) {
     // Register the Tree Data Provider
     const databaseProvider = new DatabaseTreeDataProvider();
     vscode.window.registerTreeDataProvider('openDataExplorer', databaseProvider);
+
+    // Initialize ConnectionManager
+    ConnectionManager.getInstance(context);
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with registerCommand
@@ -26,13 +31,57 @@ export function activate(context: vscode.ExtensionContext) {
         DatabaseDashboard.createOrShow(context.extensionUri, dbName);
     });
 
-    let newQueryCommand = vscode.commands.registerCommand('open-data-studio.newQuery', async () => {
-        const doc = await vscode.workspace.openTextDocument({ language: 'sql', content: '' });
-        await vscode.window.showTextDocument(doc);
+    let addConnectionCommand = vscode.commands.registerCommand('open-data-studio.addConnection', async () => {
+        const server = await vscode.window.showInputBox({
+            prompt: 'Enter SQL Server Host/IP',
+            placeHolder: 'localhost or 192.168.1.10',
+            ignoreFocusOut: true
+        });
+        if (!server) return;
+
+        const authType = await vscode.window.showQuickPick(['SqlLogin', 'Integrated'], {
+            placeHolder: 'Select Authentication Type',
+            ignoreFocusOut: true
+        });
+        if (!authType) return;
+
+        let user, password;
+        if (authType === 'SqlLogin') {
+            user = await vscode.window.showInputBox({
+                prompt: 'Enter Username',
+                ignoreFocusOut: true
+            });
+            if (!user) return;
+
+            password = await vscode.window.showInputBox({
+                prompt: 'Enter Password',
+                password: true,
+                ignoreFocusOut: true
+            });
+            if (!password) return;
+        }
+
+        const connection: ConnectionInfo = {
+            id: Date.now().toString(),
+            label: server,
+            server: server,
+            authenticationType: authType as 'SqlLogin' | 'Integrated',
+            user,
+            password
+        };
+
+        try {
+            await ConnectionManager.getInstance().addConnection(connection);
+            databaseProvider.refresh();
+            vscode.window.showInformationMessage(`Connection to ${server} added!`);
+        } catch (err: any) {
+            vscode.window.showErrorMessage(`Failed to add connection: ${err.message || err}`);
+        }
     });
 
     context.subscriptions.push(disposable);
     context.subscriptions.push(openDashboardCommand);
+    context.subscriptions.push(addConnectionCommand);
 }
 
 // This method is called when your extension is deactivated
