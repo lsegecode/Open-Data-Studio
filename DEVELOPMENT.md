@@ -26,7 +26,12 @@ This document provides technical details for developers contributing to **Open D
     ```bash
     npm install
     ```
-3.  **Run in Debug Mode**:
+3.  **Compile the extension**:
+    Run the build script to generate the `out` folder:
+    ```bash
+    npm run compile
+    ```
+4.  **Run in Debug Mode**:
     - Open the project in VS Code.
     - Press `F5` to launch the **Extension Development Host**.
 

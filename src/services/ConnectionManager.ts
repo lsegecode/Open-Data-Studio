@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import * as mssql from 'mssql';
+// We don't necessarily need to import msnodesqlv8 variable, but we need the require for webpack/bundling usually
+// However, mssql simply requires it dynamically. 
 import { ConnectionInfo } from '../models/ConnectionInfo';
 
 export class ConnectionManager {
@@ -71,10 +73,19 @@ export class ConnectionManager {
             password: connection.password,
             port: connection.port || 1433,
             options: {
-                encrypt: true, // Use this if you're on Azure.
-                trustServerCertificate: true // Change to false for Azure
+                encrypt: false, // Usually false for local/msnodesqlv8
+                trustServerCertificate: true
             }
         };
+
+        if (connection.authenticationType === 'Integrated') {
+            // Use native driver for Windows Authentication
+            config.driver = 'msnodesqlv8';
+            // msnodesqlv8 often requires connection string or different options, 
+            // but mssql wrapper handles most. 
+            // Important: connectionString might be safer for msnodesqlv8 if config fails
+            // config.options!.trustedConnection = true;
+        }
 
         const pool = new mssql.ConnectionPool(config);
         const connectedPool = await pool.connect();
