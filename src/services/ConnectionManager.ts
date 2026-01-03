@@ -66,37 +66,63 @@ export class ConnectionManager {
             throw new Error(`Connection with ID ${connectionId} not found.`);
         }
 
-        const config: mssql.config = {
-            server: connection.server,
-            database: connection.database || 'master',
-            user: connection.user,
-            password: connection.password,
-            port: connection.port || 1433,
-            options: {
-                encrypt: false, // Usually false for local/msnodesqlv8
-                trustServerCertificate: true
-            }
-        };
+        let pool: mssql.ConnectionPool;
 
         if (connection.authenticationType === 'Integrated') {
-            // Use native driver for Windows Authentication
-            config.driver = 'msnodesqlv8';
-            // msnodesqlv8 often requires connection string or different options, 
-            // but mssql wrapper handles most. 
-            // Important: connectionString might be safer for msnodesqlv8 if config fails
-            // config.options!.trustedConnection = true;
+            const database = connection.database || 'master';
+            console.log(`[Open Data Studio] DEBUG: Connecting (Integrated) to: ${connection.server}`);
+
+            const config: any = {
+                server: connection.server,
+                database: database,
+                driver: 'msnodesqlv8',
+                options: {
+                    trustedConnection: true,
+                    encrypt: false,
+                    trustServerCertificate: true,
+                    enableArithAbort: true
+                }
+            };
+
+            if (connection.port) {
+                config.port = connection.port;
+            }
+
+            pool = new mssql.ConnectionPool(config);
+        } else {
+            // SQL Login
+            const config: mssql.config = {
+                server: connection.server,
+                database: connection.database || 'master',
+                user: connection.user,
+                password: connection.password,
+                options: {
+                    encrypt: false,
+                    trustServerCertificate: true
+                }
+            };
+
+            if (connection.port) {
+                config.port = connection.port;
+            }
+
+            pool = new mssql.ConnectionPool(config);
         }
 
-        const pool = new mssql.ConnectionPool(config);
         const connectedPool = await pool.connect();
         this.activePools.set(connectionId, connectedPool);
         return connectedPool;
     }
 
     public async getDatabases(connectionId: string): Promise<string[]> {
-        const pool = await this.connect(connectionId);
-        const result = await pool.request().query('SELECT name FROM sys.databases WHERE name NOT IN (\'master\', \'tempdb\', \'model\', \'msdb\')');
-        return result.recordset.map(record => record.name);
+        try {
+            const pool = await this.connect(connectionId);
+            const result = await pool.request().query('SELECT name FROM sys.databases WHERE name NOT IN (\'master\', \'tempdb\', \'model\', \'msdb\')');
+            return result.recordset.map(record => record.name);
+        } catch (error: any) {
+            vscode.window.showErrorMessage(`Error fetching databases: ${error.message}. Ensure TCP/IP is enabled in SQL Server Configuration Manager.`);
+            throw error;
+        }
     }
 
     public async deleteConnection(connectionId: string): Promise<void> {
