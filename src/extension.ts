@@ -4,6 +4,7 @@ import { DatabaseTreeDataProvider } from './providers/DatabaseTreeDataProvider';
 import { DatabaseDashboard } from './panels/DatabaseDashboard';
 import { ConnectionManager } from './services/ConnectionManager';
 import { ConnectionInfo } from './models/ConnectionInfo';
+import { MockDatabaseService } from './services/MockDatabaseService';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -28,7 +29,15 @@ export function activate(context: vscode.ExtensionContext) {
     let openDashboardCommand = vscode.commands.registerCommand('open-data-studio.openDashboard', (databaseItem) => {
         // databaseItem will be passed if clicked from tree, or undefined if run from palette
         const dbName = databaseItem ? databaseItem.label : 'Unknown Database';
-        DatabaseDashboard.createOrShow(context.extensionUri, dbName);
+        let tables: string[] = [];
+        let procedures: string[] = [];
+
+        if (databaseItem && databaseItem.connectionId === 'mock-server-id') {
+            tables = MockDatabaseService.getMockTables();
+            procedures = MockDatabaseService.getMockStoredProcedures();
+        }
+
+        DatabaseDashboard.createOrShow(context.extensionUri, dbName, tables, procedures);
     });
 
     let addConnectionCommand = vscode.commands.registerCommand('open-data-studio.addConnection', async () => {

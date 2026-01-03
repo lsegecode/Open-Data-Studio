@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ConnectionManager } from '../services/ConnectionManager';
+import { MockDatabaseService } from '../services/MockDatabaseService';
 
 export class DatabaseTreeDataProvider implements vscode.TreeDataProvider<DatabaseItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<DatabaseItem | undefined | null | void> = new vscode.EventEmitter<DatabaseItem | undefined | null | void>();
@@ -12,9 +13,30 @@ export class DatabaseTreeDataProvider implements vscode.TreeDataProvider<Databas
 
     async getChildren(element?: DatabaseItem): Promise<DatabaseItem[]> {
         if (!element) {
-            // Root: Return Servers (Connections)
+            // Root: Return Servers (Connections) + Mock Server
             const connections = ConnectionManager.getInstance().getConnectionsMetadata();
-            return connections.map(c => new DatabaseItem(c.label, vscode.TreeItemCollapsibleState.Collapsed, 'server', c.id));
+            const items = connections.map(c => new DatabaseItem(c.label, vscode.TreeItemCollapsibleState.Collapsed, 'server', c.id));
+            items.push(new DatabaseItem('Mock Server', vscode.TreeItemCollapsibleState.Collapsed, 'server', 'mock-server-id'));
+            return items;
+        }
+
+        if (element.connectionId === 'mock-server-id') {
+            if (element.contextValue === 'server') {
+                return [new DatabaseItem('Mock Database', vscode.TreeItemCollapsibleState.Collapsed, 'database', 'mock-server-id')];
+            }
+            if (element.contextValue === 'database') {
+                return [
+                    new DatabaseItem('Tables', vscode.TreeItemCollapsibleState.Collapsed, 'folder', 'mock-server-id'),
+                    new DatabaseItem('Procedures', vscode.TreeItemCollapsibleState.Collapsed, 'folder', 'mock-server-id')
+                ];
+            }
+            if (element.label === 'Tables') {
+                return MockDatabaseService.getMockTables().map(t => new DatabaseItem(t, vscode.TreeItemCollapsibleState.None, 'table', 'mock-server-id'));
+            }
+            if (element.label === 'Procedures') {
+                return MockDatabaseService.getMockStoredProcedures().map(p => new DatabaseItem(p, vscode.TreeItemCollapsibleState.None, 'procedure', 'mock-server-id'));
+            }
+            return [];
         }
 
         if (element.contextValue === 'server') {
@@ -37,7 +59,7 @@ export class DatabaseTreeDataProvider implements vscode.TreeDataProvider<Databas
         }
 
         if (element.label === 'Tables') {
-            // Mock tables for now, as table fetching isn't in this task scope yet
+            // Mock tables for now for real connections too (as per original code, but could be empty or we could use the mock service here too if we wanted, but let's stick to the plan of only Mock Server having rich mock data for now, or just leave as is)
             return Promise.resolve([
                 new DatabaseItem('dbo.Users', vscode.TreeItemCollapsibleState.None, 'table', element.connectionId),
                 new DatabaseItem('dbo.Products', vscode.TreeItemCollapsibleState.None, 'table', element.connectionId)

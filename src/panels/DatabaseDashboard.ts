@@ -5,25 +5,27 @@ export class DatabaseDashboard {
     private readonly _panel: vscode.WebviewPanel;
     private readonly _disposables: vscode.Disposable[] = [];
     private _databaseName: string;
+    private _tables: string[];
+    private _procedures: string[];
 
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, databaseName: string) {
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, databaseName: string, tables: string[], procedures: string[]) {
         this._panel = panel;
         this._databaseName = databaseName;
+        this._tables = tables;
+        this._procedures = procedures;
         this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-        this._panel.webview.html = this._getHtmlForWebview(databaseName);
+        this._panel.webview.html = this._getHtmlForWebview(databaseName, tables, procedures);
     }
 
-    public static createOrShow(extensionUri: vscode.Uri, databaseName: string) {
+    public static createOrShow(extensionUri: vscode.Uri, databaseName: string, tables: string[] = [], procedures: string[] = []) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
         // If we already have a panel, show it.
         if (DatabaseDashboard.currentPanel) {
-            // Update the existing panel if the database is different
-            if (DatabaseDashboard.currentPanel._databaseName !== databaseName) {
-                DatabaseDashboard.currentPanel._update(databaseName);
-            }
+            // Update the existing panel if the database is different or force update
+            DatabaseDashboard.currentPanel._update(databaseName, tables, procedures);
             DatabaseDashboard.currentPanel._panel.reveal(column);
             return;
         }
@@ -38,13 +40,15 @@ export class DatabaseDashboard {
             }
         );
 
-        DatabaseDashboard.currentPanel = new DatabaseDashboard(panel, extensionUri, databaseName);
+        DatabaseDashboard.currentPanel = new DatabaseDashboard(panel, extensionUri, databaseName, tables, procedures);
     }
 
-    public _update(databaseName: string) {
+    public _update(databaseName: string, tables: string[], procedures: string[]) {
         this._databaseName = databaseName;
+        this._tables = tables;
+        this._procedures = procedures;
         this._panel.title = `Dashboard: ${databaseName}`;
-        this._panel.webview.html = this._getHtmlForWebview(databaseName);
+        this._panel.webview.html = this._getHtmlForWebview(databaseName, tables, procedures);
     }
 
     public dispose() {
@@ -58,7 +62,10 @@ export class DatabaseDashboard {
         }
     }
 
-    private _getHtmlForWebview(databaseName: string) {
+    private _getHtmlForWebview(databaseName: string, tables: string[], procedures: string[]) {
+        const tablesHtml = tables.map(t => `<div class="item">${t}</div>`).join('');
+        const proceduresHtml = procedures.map(p => `<div class="item">${p}</div>`).join('');
+
         return `<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -89,18 +96,14 @@ export class DatabaseDashboard {
         <div class="section">
             <h2>Tables</h2>
             <div id="tablesList">
-                <div class="item">dbo.Users</div>
-                <div class="item">dbo.Products</div>
-                <div class="item">sales.Orders</div>
-                <div class="item">sales.OrderDetails</div>
+                ${tablesHtml || '<div class="item">No tables found (or not loaded).</div>'}
             </div>
         </div>
 
         <div class="section">
             <h2>Stored Procedures</h2>
             <div id="proceduresList">
-                <div class="item">dbo.sp_GetUsers</div>
-                <div class="item">sales.sp_UpdateOrder</div>
+                ${proceduresHtml || '<div class="item">No stored procedures found (or not loaded).</div>'}
             </div>
         </div>
 
