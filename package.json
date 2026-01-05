@@ -50,6 +50,16 @@
                 "command": "open-data-studio.deleteConnection",
                 "title": "Delete Connection",
                 "icon": "$(trash)"
+            },
+            {
+                "command": "open-data-studio.newQuery",
+                "title": "New Query",
+                "icon": "$(new-file)"
+            },
+            {
+                "command": "open-data-studio.runQuery",
+                "title": "Run Query",
+                "icon": "$(play)"
             }
         ],
         "menus": {
@@ -65,6 +75,11 @@
                     "command": "open-data-studio.openDashboard",
                     "when": "view == openDataExplorer && viewItem == database",
                     "group": "navigation"
+                },
+                {
+                    "command": "open-data-studio.newQuery",
+                    "when": "view == openDataExplorer && viewItem == database",
+                    "group": "inline"
                 },
                 {
                     "command": "open-data-studio.deleteConnection",

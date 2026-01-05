@@ -5,6 +5,8 @@ import { DatabaseDashboard } from './panels/DatabaseDashboard';
 import { ConnectionManager } from './services/ConnectionManager';
 import { ConnectionInfo } from './models/ConnectionInfo';
 import { MockDatabaseService } from './services/MockDatabaseService';
+import { QueryManager } from './services/QueryManager';
+import { QueryResultsPanel } from './panels/QueryResultsPanel';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -100,10 +102,69 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    let newQueryCommand = vscode.commands.registerCommand('open-data-studio.newQuery', async (databaseItem) => {
+        // databaseItem comes from the tree view context
+        if (!databaseItem) {
+            vscode.window.showErrorMessage('Please select a database from the tree view to create a new query.');
+            return;
+        }
+
+        const connectionId = databaseItem.connectionId;
+        const databaseName = databaseItem.label; // Label is the DB name for database items
+
+        // Open a new untitled SQL document
+        const document = await vscode.workspace.openTextDocument({
+            language: 'sql',
+            content: `-- Query for ${databaseName}\nSELECT * FROM `
+        });
+
+        // Register the document with our QueryManager so we know which DB connection to use
+        QueryManager.getInstance().registerQueryDocument(document.uri, connectionId, databaseName);
+
+        await vscode.window.showTextDocument(document);
+    });
+
+    let runQueryCommand = vscode.commands.registerCommand('open-data-studio.runQuery', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return;
+        }
+
+        const connectionCtx = QueryManager.getInstance().getConnectionForDocument(editor.document.uri);
+        if (!connectionCtx) {
+            vscode.window.showErrorMessage('This document is not associated with any database connection. Please use "New Query" from the Database Explorer.');
+            return;
+        }
+
+        const query = editor.document.getText();
+        if (!query) {
+            vscode.window.showInformationMessage('Query is empty.');
+            return;
+        }
+
+        try {
+            let results: any[] = [];
+            if (connectionCtx.connectionId === 'mock-server-id') {
+                results = await MockDatabaseService.executeMockQuery(query);
+            } else {
+                // TODO: Implement real connection execution
+                vscode.window.showInformationMessage(`Running query on real connection ${connectionCtx.connectionId} is not yet implemented.`);
+                return;
+            }
+
+            QueryResultsPanel.createOrShow(context.extensionUri, results);
+        } catch (err: any) {
+            vscode.window.showErrorMessage(`Query execution failed: ${err.message || err}`);
+        }
+    });
+
     context.subscriptions.push(disposable);
     context.subscriptions.push(openDashboardCommand);
     context.subscriptions.push(addConnectionCommand);
     context.subscriptions.push(deleteConnectionCommand);
+    context.subscriptions.push(newQueryCommand);
+    context.subscriptions.push(runQueryCommand);
+
 }
 
 // This method is called when your extension is deactivated
