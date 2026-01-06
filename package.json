@@ -60,6 +60,11 @@
                 "command": "open-data-studio.runQuery",
                 "title": "Run Query",
                 "icon": "$(play)"
+            },
+            {
+                "command": "open-data-studio.scriptTableAsCreate",
+                "title": "Script as CREATE",
+                "icon": "$(code)"
             }
         ],
         "menus": {
@@ -85,6 +90,11 @@
                     "command": "open-data-studio.deleteConnection",
                     "when": "view == openDataExplorer && viewItem == server",
                     "group": "inline"
+                },
+                {
+                    "command": "open-data-studio.scriptTableAsCreate",
+                    "when": "view == openDataExplorer && viewItem == table",
+                    "group": "navigation"
                 }
             ]
         }

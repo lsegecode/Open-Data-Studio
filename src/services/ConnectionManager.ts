@@ -72,28 +72,32 @@ export class ConnectionManager {
             const database = connection.database || 'master';
             console.log(`[Open Data Studio] DEBUG: Connecting (Integrated) to: ${connection.server}`);
 
-            // Use msnodesqlv8 driver with proper config for Windows Authentication
+            // Build proper ODBC connection string for Windows Authentication
+            // This works with both default instances (localhost) and named instances (localhost\SQLEXPRESS)
+            let serverPart = connection.server;
+            if (connection.port) {
+                serverPart = `${connection.server},${connection.port}`;
+            }
+
+            const connectionString = `Driver={ODBC Driver 17 for SQL Server};Server=${serverPart};Database=${database};Trusted_Connection=Yes;TrustServerCertificate=Yes;`;
+
+            console.log(`[Open Data Studio] DEBUG: Using connection string (Integrated): Server=${serverPart}, Database=${database}`);
+
+            // Use msnodesqlv8 with connection string
             const config: any = {
-                server: connection.server,
-                database: database,
+                connectionString: connectionString,
                 driver: 'msnodesqlv8',
                 options: {
                     trustedConnection: true,
-                    encrypt: false,
-                    trustServerCertificate: true,
                     enableArithAbort: true
-                }
+                },
+                connectionTimeout: 15000, // 15 second timeout for faster failure detection
+                requestTimeout: 30000
             };
-
-            if (connection.port) {
-                config.port = connection.port;
-            }
-
-            console.log(`[Open Data Studio] DEBUG: Config - Server: ${config.server}, Database: ${config.database}, Driver: ${config.driver}`);
 
             pool = new mssql.ConnectionPool(config);
         } else {
-            // SQL Login
+            // SQL Login - use standard mssql config
             const config: mssql.config = {
                 server: connection.server,
                 database: connection.database || 'master',
@@ -101,20 +105,80 @@ export class ConnectionManager {
                 password: connection.password,
                 options: {
                     encrypt: false,
-                    trustServerCertificate: true
-                }
+                    trustServerCertificate: true,
+                    enableArithAbort: true
+                },
+                connectionTimeout: 15000,
+                requestTimeout: 30000
             };
 
             if (connection.port) {
                 config.port = connection.port;
             }
 
+            console.log(`[Open Data Studio] DEBUG: Using SQL Login for server: ${connection.server}`);
             pool = new mssql.ConnectionPool(config);
         }
 
-        const connectedPool = await pool.connect();
-        this.activePools.set(connectionId, connectedPool);
-        return connectedPool;
+        try {
+            const connectedPool = await pool.connect();
+            this.activePools.set(connectionId, connectedPool);
+            console.log(`[Open Data Studio] Successfully connected to ${connection.server}`);
+            return connectedPool;
+        } catch (error: any) {
+            console.error(`[Open Data Studio] Connection failed: ${error.message}`);
+            // Provide helpful error messages for common issues
+            if (error.message.includes('ODBC Driver')) {
+                throw new Error(`Connection failed: ODBC Driver 17 for SQL Server not found. Please install it from Microsoft's website.`);
+            }
+            if (error.message.includes('TCP/IP') || error.message.includes('connection refused')) {
+                throw new Error(`Connection failed: Cannot connect to ${connection.server}. Ensure SQL Server is running, TCP/IP is enabled in SQL Server Configuration Manager, and the SQL Server Browser service is running (for named instances).`);
+            }
+            throw error;
+        }
+    }
+
+    public async getTableSchema(connectionId: string, databaseName: string, tableName: string): Promise<any[]> {
+        const pool = await this.connect(connectionId);
+
+        // Parse schema and table name (format: "schema.tableName" like "dbo.Users")
+        let schema = 'dbo';
+        let table = tableName;
+        if (tableName.includes('.')) {
+            const parts = tableName.split('.');
+            schema = parts[0];
+            table = parts[1];
+        }
+
+        // Query INFORMATION_SCHEMA for column definitions
+        const query = `
+            USE [${databaseName}];
+            SELECT 
+                c.COLUMN_NAME,
+                c.DATA_TYPE,
+                c.CHARACTER_MAXIMUM_LENGTH,
+                c.NUMERIC_PRECISION,
+                c.NUMERIC_SCALE,
+                c.IS_NULLABLE,
+                c.COLUMN_DEFAULT,
+                CASE WHEN pk.COLUMN_NAME IS NOT NULL THEN 1 ELSE 0 END as IS_PRIMARY_KEY
+            FROM INFORMATION_SCHEMA.COLUMNS c
+            LEFT JOIN (
+                SELECT ku.TABLE_CATALOG, ku.TABLE_SCHEMA, ku.TABLE_NAME, ku.COLUMN_NAME
+                FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ku
+                    ON tc.CONSTRAINT_TYPE = 'PRIMARY KEY' 
+                    AND tc.CONSTRAINT_NAME = ku.CONSTRAINT_NAME
+            ) pk ON c.TABLE_CATALOG = pk.TABLE_CATALOG 
+                AND c.TABLE_SCHEMA = pk.TABLE_SCHEMA 
+                AND c.TABLE_NAME = pk.TABLE_NAME 
+                AND c.COLUMN_NAME = pk.COLUMN_NAME
+            WHERE c.TABLE_SCHEMA = '${schema}' AND c.TABLE_NAME = '${table}'
+            ORDER BY c.ORDINAL_POSITION
+        `;
+
+        const result = await pool.request().query(query);
+        return result.recordset;
     }
 
     public async getDatabases(connectionId: string): Promise<string[]> {

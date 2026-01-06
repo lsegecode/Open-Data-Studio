@@ -26,12 +26,13 @@ export class DatabaseTreeDataProvider implements vscode.TreeDataProvider<Databas
             }
             if (element.contextValue === 'database') {
                 return [
-                    new DatabaseItem('Tables', vscode.TreeItemCollapsibleState.Collapsed, 'folder', 'mock-server-id'),
-                    new DatabaseItem('Procedures', vscode.TreeItemCollapsibleState.Collapsed, 'folder', 'mock-server-id')
+                    new DatabaseItem('Tables', vscode.TreeItemCollapsibleState.Collapsed, 'folder', 'mock-server-id', element.label),
+                    new DatabaseItem('Procedures', vscode.TreeItemCollapsibleState.Collapsed, 'folder', 'mock-server-id', element.label)
                 ];
             }
             if (element.label === 'Tables') {
-                return MockDatabaseService.getMockTables().map(t => new DatabaseItem(t, vscode.TreeItemCollapsibleState.None, 'table', 'mock-server-id'));
+                const dbName = element.parentDatabaseName || 'Mock Database';
+                return MockDatabaseService.getMockTables().map(t => new DatabaseItem(t, vscode.TreeItemCollapsibleState.None, 'table', 'mock-server-id', dbName));
             }
             if (element.label === 'Procedures') {
                 return MockDatabaseService.getMockStoredProcedures().map(p => new DatabaseItem(p, vscode.TreeItemCollapsibleState.None, 'procedure', 'mock-server-id'));
@@ -53,16 +54,17 @@ export class DatabaseTreeDataProvider implements vscode.TreeDataProvider<Databas
         if (element.contextValue === 'database') {
             // Children of Database: Folder grouping (Tables, Views, etc. - simplified for now)
             return Promise.resolve([
-                new DatabaseItem('Tables', vscode.TreeItemCollapsibleState.Collapsed, 'folder', element.connectionId),
-                new DatabaseItem('Procedures', vscode.TreeItemCollapsibleState.Collapsed, 'folder', element.connectionId)
+                new DatabaseItem('Tables', vscode.TreeItemCollapsibleState.Collapsed, 'folder', element.connectionId, element.label),
+                new DatabaseItem('Procedures', vscode.TreeItemCollapsibleState.Collapsed, 'folder', element.connectionId, element.label)
             ]);
         }
 
         if (element.label === 'Tables') {
-            // Mock tables for now for real connections too (as per original code, but could be empty or we could use the mock service here too if we wanted, but let's stick to the plan of only Mock Server having rich mock data for now, or just leave as is)
+            const dbName = element.parentDatabaseName || 'Unknown';
+            // Placeholder tables for real connections (would be fetched from database in real implementation)
             return Promise.resolve([
-                new DatabaseItem('dbo.Users', vscode.TreeItemCollapsibleState.None, 'table', element.connectionId),
-                new DatabaseItem('dbo.Products', vscode.TreeItemCollapsibleState.None, 'table', element.connectionId)
+                new DatabaseItem('dbo.Users', vscode.TreeItemCollapsibleState.None, 'table', element.connectionId, dbName),
+                new DatabaseItem('dbo.Products', vscode.TreeItemCollapsibleState.None, 'table', element.connectionId, dbName)
             ]);
         }
 
@@ -79,7 +81,8 @@ export class DatabaseItem extends vscode.TreeItem {
         public readonly label: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly contextValue: string,
-        public readonly connectionId?: string
+        public readonly connectionId?: string,
+        public readonly parentDatabaseName?: string // Added for Script as CREATE
     ) {
         super(label, collapsibleState);
         this.tooltip = `${this.label}`;
@@ -93,6 +96,8 @@ export class DatabaseItem extends vscode.TreeItem {
             this.iconPath = new vscode.ThemeIcon('table');
         } else if (contextValue === 'folder') {
             this.iconPath = new vscode.ThemeIcon('folder');
+        } else if (contextValue === 'procedure') {
+            this.iconPath = new vscode.ThemeIcon('symbol-method');
         }
     }
 }
