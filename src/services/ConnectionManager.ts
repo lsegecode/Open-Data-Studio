@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as mssql from 'mssql';
-// We don't necessarily need to import msnodesqlv8 variable, but we need the require for webpack/bundling usually
-// However, mssql simply requires it dynamically. 
+// Import msnodesqlv8 for Windows Authentication - this is a native ODBC driver
+const msnodesqlv8 = require('msnodesqlv8');
 import { ConnectionInfo } from '../models/ConnectionInfo';
 
 export class ConnectionManager {
@@ -72,6 +72,7 @@ export class ConnectionManager {
             const database = connection.database || 'master';
             console.log(`[Open Data Studio] DEBUG: Connecting (Integrated) to: ${connection.server}`);
 
+            // Use msnodesqlv8 driver with proper config for Windows Authentication
             const config: any = {
                 server: connection.server,
                 database: database,
@@ -87,6 +88,8 @@ export class ConnectionManager {
             if (connection.port) {
                 config.port = connection.port;
             }
+
+            console.log(`[Open Data Studio] DEBUG: Config - Server: ${config.server}, Database: ${config.database}, Driver: ${config.driver}`);
 
             pool = new mssql.ConnectionPool(config);
         } else {
